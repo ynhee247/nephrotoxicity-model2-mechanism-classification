@@ -4,7 +4,7 @@
 Thư viện sử dụng:
 - RDKit: MACCs (166 bit), ECFP2 (2048 bit), RDK7 (4096 bit)
 - Padelpy: PubChem (881 bit), Klekota-Roth Count (4860 bit), Substructure Count (307 bit)
-=> 6 bộ fingerprints
+==> 6 bộ fingerprints
 
 *Xử lý fingerprint RDKIT:*
 - Run `python fingerprint_rdkit.py` => 3 files fingerprint RDKit: maccs, ecfp2, rdk7 (.csv, .npy)
