@@ -18,7 +18,7 @@ Thư viện sử dụng:
 + `<Descriptor name="SubstructureFingerprintCount" value="true"/>`
 + `<Descriptor name="KlekotaRothFingerprintCount" value="true"/>`
 - Run `java -jar <path to PaDEL-Descriptor.jar> -fingerprints -dir <path to smiles.smi> -file <path to output file>` (output file: data/fingerprints, tạo sẵn file .csv rồi copy path vô)
-- Sort lại name (A to Z) để đúng thứ tự smiles so với file coche
+- Sort lại name (A to Z) để đúng thứ tự smiles so với file coche => xóa cột **Name** luôn
 
 ==> Folder **data/** gồm 2 folder **labels (chứa 7 files 7 cơ chế: coche1.csv...)** + **fingerprints (chứa 6 files .csv fingerprint, xóa mấy file thừa đi)**
 
