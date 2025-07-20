@@ -6,7 +6,7 @@ from rdkit.Chem import AllChem, MACCSkeys, RDKFingerprint
 from padelpy import padeldescriptor
 from padelpy import from_smiles
 
-input_file = './data/coche1.csv'
+input_file = './data/labels/coche1.csv'
 smiles_col = 'smiles'
 output_dir = './data/fingerprints/'
 
@@ -30,15 +30,24 @@ def calc_rdk7(smiles):
 
 print("Tính MACCS...")
 maccs_arr = np.array([calc_maccs(smi) for smi in smiles_list])
-pd.DataFrame(maccs_arr).to_csv(os.path.join(output_dir, "maccs.csv"), index=False)
+# pd.DataFrame(maccs_arr).to_csv(os.path.join(output_dir, "maccs.csv"), index=False)
+df_maccs = pd.DataFrame(maccs_arr)
+df_maccs.insert(0, "smiles", smiles_list)
+df_maccs.to_csv(os.path.join(output_dir, "maccs.csv"), index=False)
 np.save(os.path.join(output_dir, "maccs.npy"), maccs_arr)
 
 print("Tính ECFP2 (radius=1)...")
 ecfp2_arr = np.array([calc_ecfp2(smi) for smi in smiles_list])
-pd.DataFrame(ecfp2_arr).to_csv(os.path.join(output_dir, "ecfp2.csv"), index=False)
+# pd.DataFrame(ecfp2_arr).to_csv(os.path.join(output_dir, "ecfp2.csv"), index=False)
+df_ecfp2 = pd.DataFrame(ecfp2_arr)
+df_ecfp2.insert(0, "smiles", smiles_list)
+df_ecfp2.to_csv(os.path.join(output_dir, "ecfp2.csv"), index=False)
 np.save(os.path.join(output_dir, "ecfp2.npy"), ecfp2_arr)
 
 print("Tính RDK7 (4096 bit)...")
 rdk7_arr = np.array([calc_rdk7(smi) for smi in smiles_list])
-pd.DataFrame(rdk7_arr).to_csv(os.path.join(output_dir, "rdk7.csv"), index=False)
+# pd.DataFrame(rdk7_arr).to_csv(os.path.join(output_dir, "rdk7.csv"), index=False)
+df_rdk7 = pd.DataFrame(rdk7_arr)
+df_rdk7.insert(0, "smiles", smiles_list)
+df_rdk7.to_csv(os.path.join(output_dir, "rdk7.csv"), index=False)
 np.save(os.path.join(output_dir, "rdk7.npy"), rdk7_arr)
