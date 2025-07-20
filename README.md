@@ -30,3 +30,6 @@ Thư viện sử dụng:
 - Folder output sẽ chứa:
 + File .csv chứa kết quả training của từng cơ chế: vd **coche1_all_cv.csv**...
 + Best model cho từng cơ chế (.joblib): vd **best_coche1_xgb_smote_pubchem.joblib**...
+
+## Predicting
+- Run `python predict.py --model <path> --input <path>`
