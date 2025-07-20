@@ -22,7 +22,7 @@ Thư viện sử dụng:
 
 ==> Folder **data/** gồm 2 folder **labels (chứa 7 files 7 cơ chế: coche1.csv...)** + **fingerprints (chứa 6 files .csv fingerprint, xóa mấy file thừa đi)**
 
-## Traning
+## Training
 - Chỉ run file **main.py**
 - Run 7 lần cho 7 cơ chế
 - Run `python main.py --mechanism <chọn 1 cơ chế, số 1 -> 7)> --fp_dir data/fingerprints --lbl_dir <path to file .csv coche> --out_dir <path to output folder>` (output folder: tạo folder **results**)
