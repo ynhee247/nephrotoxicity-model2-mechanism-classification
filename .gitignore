@@ -4,4 +4,5 @@ data_org/
 results/
 fingerprint/
 test_predict.csv
-predictions.csv
+predictions.csv"git push -u origin main" 
+"git push -u origin main.pub" 
