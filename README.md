@@ -8,7 +8,7 @@ Thư viện sử dụng:
 ==> 6 bộ fingerprints
 
 *Xử lý fingerprint RDKIT:*
-- Run `python fingerprint_rdkit.py` => 3 files fingerprint RDKit: maccs, ecfp2, rdk7 (.csv, .npy)
+- Run `python fingerprint_rdkit.py --input_file <path>` => 3 files fingerprint RDKit: maccs, ecfp2, rdk7 (.csv, .npy)
 
 *Xử lý fingerprint Padelpy*:
 - Tạo file smiles.smi (data/fingerprints)
