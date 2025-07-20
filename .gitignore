@@ -7,3 +7,6 @@ test_predict.csv
 predictions.csv
 "git push -u origin main" 
 "git push -u origin main.pub" 
+test_predict.smi
+fp_test_predict.csv
+predictions.csv
