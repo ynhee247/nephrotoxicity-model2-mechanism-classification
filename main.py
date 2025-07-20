@@ -1,7 +1,7 @@
 import os
 import argparse
 import pandas as pd
-from config import MODELS, REFIT_METRIC, RANDOM_STATE
+from config import MODELS, REFIT_METRIC, RANDOM_STATE, FP_DIR, LBL_DIR
 from data_loader import load_data
 from preprocess import resample_data
 from model_training import train_model

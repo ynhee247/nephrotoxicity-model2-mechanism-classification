@@ -8,7 +8,7 @@ from padelpy import from_smiles
 
 input_file = './data/coche1.csv'
 smiles_col = 'smiles'
-output_dir = '.data/fingerprints/'
+output_dir = './data/fingerprints/'
 
 os.makedirs(output_dir, exist_ok=True)
 

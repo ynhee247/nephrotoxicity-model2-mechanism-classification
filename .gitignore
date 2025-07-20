@@ -3,3 +3,5 @@ data1/
 data_org/
 results/
 fingerprint/
+test_predict.csv
+predictions.csv
