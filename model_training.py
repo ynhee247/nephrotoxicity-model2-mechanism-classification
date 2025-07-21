@@ -4,7 +4,7 @@ from sklearn.metrics import (accuracy_score, precision_score, recall_score, f1_s
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
-from config import CV, SCORING_METRICS, REFIT_METRIC, RANDOM_STATE
+from config import CV, SCORING_METRICS, REFIT_METRIC, RANDOM_STATE, DEVICE
 
 # Hyperparameter grids (Bảng 2.4 KL)
 PARAM_GRIDS = {
@@ -40,7 +40,21 @@ def train_model(X, y, model_name: str):
     elif model_name == 'rf':
         estimator = RandomForestClassifier(random_state=RANDOM_STATE)
     elif model_name == 'xgb':
-        estimator = XGBClassifier(use_label_encoder=False, eval_metric='logloss', random_state=RANDOM_STATE)
+        if DEVICE == 'cuda':
+            estimator = XGBClassifier(
+                use_label_encoder=False,
+                eval_metric='logloss',
+                random_state=RANDOM_STATE,
+                tree_method='gpu_hist',
+                predictor='gpu_predictor',
+                gpu_id=0,
+            )
+        else:
+            estimator = XGBClassifier(
+                use_label_encoder=False,
+                eval_metric='logloss',
+                random_state=RANDOM_STATE,
+            )
     else:
         raise ValueError(f"Unknown model: {model_name}")
     
