@@ -32,4 +32,5 @@ Thư viện sử dụng:
 + Best model cho từng cơ chế (.joblib): vd **best_coche1_xgb_smote_pubchem.joblib**...
 
 ## Predicting
-- Run `python predict.py --model <path> --input <path>`
+- Chuẩn bị file input đã **precompute fingerprint** gồm các cột: Name, smiles, fp...
+- Run `python predict.py --model <path (.joblib)> --input <path>`

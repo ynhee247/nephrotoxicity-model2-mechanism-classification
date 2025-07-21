@@ -3,10 +3,8 @@ data1/
 data_org/
 results/
 fingerprint/
-test_predict.csv
-predictions.csv
+test-predict/
 "git push -u origin main" 
-"git push -u origin main.pub" 
+"git push -u origin main.pub"
+test_predict.csv
 test_predict.smi
-fp_test_predict.csv
-predictions.csv
