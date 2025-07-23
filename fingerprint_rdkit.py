@@ -4,8 +4,6 @@ import numpy as np
 import os
 from rdkit import Chem
 from rdkit.Chem import AllChem, MACCSkeys, RDKFingerprint
-from padelpy import padeldescriptor
-from padelpy import from_smiles
 
 
 parser = argparse.ArgumentParser(description="Generate RDKit fingerprints from a CSV file containing SMILES")
