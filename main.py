@@ -1,7 +1,7 @@
 import os
 import argparse
 import pandas as pd
-from config import MODELS, REFIT_METRIC, RANDOM_STATE, FP_DIR, LBL_DIR
+from config import MODELS, REFIT_METRIC, RANDOM_STATE, FP_DIR, LBL_DIR, DEVICE
 from data_loader import load_data
 from preprocess import resample_data
 from model_training import train_model
@@ -34,6 +34,9 @@ if __name__ == '__main__':
                         help='Directory to save trained models and CV results')
     args = parser.parse_args()
 
+    # Display which device will be used for training
+    print(f"Selected device: {DEVICE}")
+    
     # Prepare output directory
     out_dir = os.path.abspath(args.out_dir)
     os.makedirs(out_dir, exist_ok=True)

@@ -34,6 +34,9 @@ def train_model(X, y, model_name: str):
     Refitting on REFIT_METRIC.
     Returns best_estimator_, best_score_, cv_results_
     """
+
+    # Inform the user which device will be used for training
+    print(f"Using device: {DEVICE}")
     
     if model_name == 'svm':
         estimator = SVC(random_state=RANDOM_STATE, probability=True)
@@ -42,16 +45,16 @@ def train_model(X, y, model_name: str):
     elif model_name == 'xgb':
         if DEVICE == 'cuda':
             estimator = XGBClassifier(
-                use_label_encoder=False,
+                # use_label_encoder=False,
                 eval_metric='logloss',
                 random_state=RANDOM_STATE,
-                tree_method='gpu_hist',
-                predictor='gpu_predictor',
-                gpu_id=0,
+                tree_method='hist',
+                # predictor='gpu_predictor',
+                # gpu_id=0,
             )
         else:
             estimator = XGBClassifier(
-                use_label_encoder=False,
+                # use_label_encoder=False,
                 eval_metric='logloss',
                 random_state=RANDOM_STATE,
             )
