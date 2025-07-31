@@ -32,14 +32,14 @@ def calc_rdk7(smiles):
     mol = Chem.MolFromSmiles(smiles)
     return np.array(RDKFingerprint(mol, minPath=1, maxPath=7, fpSize=4096)) if mol else np.nan
 
-print("Tính MACCS...")
+print("Tính MACCS (166 bit)...")
 maccs_arr = np.array([calc_maccs(smi) for smi in smiles_list])
 df_maccs = pd.DataFrame(maccs_arr)
 df_maccs.insert(0, "smiles", smiles_list)
 df_maccs.to_csv(os.path.join(output_dir, "maccs.csv"), index=False)
 np.save(os.path.join(output_dir, "maccs.npy"), maccs_arr)
 
-print("Tính ECFP2 (radius=1)...")
+print("Tính ECFP2 (2048 bit)...")
 ecfp2_arr = np.array([calc_ecfp2(smi) for smi in smiles_list])
 df_ecfp2 = pd.DataFrame(ecfp2_arr)
 df_ecfp2.insert(0, "smiles", smiles_list)
