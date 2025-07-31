@@ -75,9 +75,9 @@
         <Descriptor name="EStateFingerprinter" value="false"/>
         <Descriptor name="GraphOnlyFingerprinter" value="false"/>
         <Descriptor name="MACCSFingerprinter" value="false"/>
-        <Descriptor name="PubchemFingerprinter" value="false"/>
+        <Descriptor name="PubchemFingerprinter" value="true"/>
         <Descriptor name="SubstructureFingerprinter" value="false"/>
-        <Descriptor name="SubstructureFingerprintCount" value="true"/>
+        <Descriptor name="SubstructureFingerprintCount" value="false"/>
         <Descriptor name="KlekotaRothFingerprinter" value="false"/>
         <Descriptor name="KlekotaRothFingerprintCount" value="false"/>
         <Descriptor name="AtomPairs2DFingerprinter" value="false"/>
