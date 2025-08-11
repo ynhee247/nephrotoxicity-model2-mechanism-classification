@@ -1,4 +1,5 @@
-from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
+from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 
 def evaluate_model(model, X_test, y_test):
     """
@@ -20,3 +21,16 @@ def evaluate_model(model, X_test, y_test):
         'roc_auc': auc,
         'confusion_matrix': cm # [[TN, FP], [FN, TP]]
     }
+
+
+def plot_confusion_matrix(cm, labels=None, cmap='Blues', filename=None):
+    """Plot and optionally save a confusion matrix."""
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=labels)
+    fig, ax = plt.subplots(figsize=(4, 4))
+    disp.plot(cmap=cmap, ax=ax, colorbar=False)
+    plt.tight_layout()
+    if filename:
+        plt.savefig(filename)
+    else:
+        plt.show()
+    plt.close(fig)

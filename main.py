@@ -5,7 +5,7 @@ from config import MODELS, REFIT_METRIC, RANDOM_STATE, FP_DIR, LBL_DIR, DEVICE
 from data_loader import load_data
 from preprocess import resample_data
 from model_training import train_model
-from evaluation import evaluate_model
+from evaluation import evaluate_model, plot_confusion_matrix
 from utils import save_model
 from sklearn.model_selection import train_test_split
 
@@ -66,9 +66,9 @@ if __name__ == '__main__':
             X.to_csv(os.path.join(out_dir, out_fp_csv), index=False)
             print(f"Saved matrix to {out_fp_csv}")
 
-            # Stratified train/test split
+            # Stratified train/test split (train:test = 7:3)
             X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=0.2,
+                X, y, test_size=0.3,
                 stratify=y, random_state=RANDOM_STATE
             )
 
@@ -115,7 +115,7 @@ if __name__ == '__main__':
         fp_path_best = next(p for p in fp_paths if os.path.splitext(os.path.basename(p))[0]==best_row['fingerprint']) # Get path of fingerprint file
         X_best, y_best, _ = load_data(mech, fp_path_best, lbl_path)
         X_tr, X_te, y_tr, y_te = train_test_split(
-            X_best, y_best, test_size=0.2,
+            X_best, y_best, test_size=0.3,
             stratify=y_best, random_state=RANDOM_STATE
         )
         X_res_best, y_res_best = resample_data(X_tr, y_tr, best_row['resample'])
@@ -125,6 +125,18 @@ if __name__ == '__main__':
         final_metrics = evaluate_model(final_model, X_te, y_te)
         print(f"Test ROC AUC for the best model of mechanism {mech} - model {best_row['model']}_{best_row['resample']}_{best_row['fingerprint']}: {final_metrics['roc_auc']:.4f}")
         print(final_metrics['report'])
+
+        # Plot and save confusion matrix
+        cm_file = os.path.join(
+            out_dir,
+            f'confusion_coche{mech}_{best_row["model"]}_{best_row["resample"]}_{best_row["fingerprint"]}.png'
+        )
+        plot_confusion_matrix(
+            final_metrics['confusion_matrix'],
+            labels=['Non-toxic', 'Toxic'],
+            filename=cm_file
+        )
+        print(f"Saved confusion matrix to {cm_file}")
 
         # Save the best model
         best_model = f"best_coche{mech}_{best_row['model']}_{best_row['resample']}_{best_row['fingerprint']}.joblib"
