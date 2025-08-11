@@ -28,11 +28,11 @@ PARAM_GRIDS = {
     }
 }
 
-def train_model(X, y, model_name: str):
+def train_model(X, y, model_name: str, refit_metric=None):
     """
     Hyperparameter tuning with GridSearchCV using multiple scoring metrics.
-    Refitting on REFIT_METRIC.
-    Returns best_estimator_, best_score_, cv_results_
+    Optionally refits on the provided metric to obtain a trained model.
+    Returns best_estimator_ (or None), best_score_ (or None), cv_results_
     """
 
     # Inform the user which device will be used for training
@@ -74,9 +74,16 @@ def train_model(X, y, model_name: str):
         param_grid=PARAM_GRIDS[model_name],
         cv=CV,
         scoring=SCORERS,
-        refit=REFIT_METRIC,
+        refit=refit_metric or False,
         n_jobs=-1
     )
     grid.fit(X,y)
     
-    return grid.best_estimator_, grid.best_score_, grid.cv_results_
+    if refit_metric:
+        best_estimator = grid.best_estimator_
+        best_score = grid.best_score_
+    else:
+        best_estimator = None
+        best_score = None
+
+    return best_estimator, best_score, grid.cv_results_
