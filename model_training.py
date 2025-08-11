@@ -4,7 +4,7 @@ from sklearn.metrics import (accuracy_score, precision_score, recall_score, f1_s
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
-from config import CV, SCORING_METRICS, REFIT_METRIC, RANDOM_STATE, DEVICE
+from config import CV, SCORING_METRICS, RANDOM_STATE, DEVICE
 
 # Hyperparameter grids (Bảng 2.4 KL)
 PARAM_GRIDS = {

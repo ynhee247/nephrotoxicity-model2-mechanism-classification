@@ -1,7 +1,7 @@
 import os
 import argparse
 import pandas as pd
-from config import MODELS, REFIT_METRIC, RANDOM_STATE, FP_DIR, LBL_DIR, DEVICE
+from config import MODELS, RANDOM_STATE, FP_DIR, LBL_DIR, DEVICE
 from data_loader import load_data
 from preprocess import resample_data
 from model_training import train_model
@@ -75,9 +75,8 @@ if __name__ == '__main__':
             for method in ['smote', 'rus']:
                 X_res, y_res = resample_data(X_train, y_train, method)
                 for model_name in MODELS:
-                    print(f"Training {model_name.upper()} | FP={fp_name} | Method={method.upper()} | refit={REFIT_METRIC}")
-                    model, best_score, cv_results = train_model(X_res, y_res, model_name)
-                    print(f"Best {REFIT_METRIC} = {best_score:.4f}")
+                    print(f"Training {model_name.upper()} | FP={fp_name} | Method={method.upper()} | refit=False")
+                    _, _, cv_results = train_model(X_res, y_res, model_name, refit_metric=None)
 
                     # Save individual CV results
                     df_cv = pd.DataFrame(cv_results)

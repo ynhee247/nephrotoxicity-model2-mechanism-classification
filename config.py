@@ -13,7 +13,6 @@ MODELS = ['svm', 'rf', 'xgb']
 # Grid search settings
 CV = 5 # number of folds for CV
 SCORING_METRICS = ['accuracy', 'precision', 'recall', 'f1']
-REFIT_METRIC = 'f1'
 RANDOM_STATE = 42
 
 def gpu_available() -> bool:
