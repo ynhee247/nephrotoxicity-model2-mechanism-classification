@@ -32,10 +32,12 @@ if __name__ == '__main__':
                         help='Path to label CSV file or directory of label CSVs')
     parser.add_argument('--out_dir', type=str, default='models',
                         help='Directory to save trained models and CV results')
+    parser.add_argument('--best_config', type=str,
+                        help='CSV file specifying selected model/resample/fingerprint for each mechanism')
     args = parser.parse_args()
 
     # Display which device will be used for training
-    print(f"Selected device: {DEVICE}")
+    print(f"Device: {DEVICE}")
     
     # Prepare output directory
     out_dir = os.path.abspath(args.out_dir)
@@ -45,9 +47,7 @@ if __name__ == '__main__':
     fp_paths = get_fp_paths(args.fp_dir)
     mechanisms = [args.mechanism] if args.mechanism else list(range(1, 8))
 
-    # To collect summary of best per mech
-    summary = []
-
+    # Run cross-validation
     for mech in mechanisms:
         lbl_path = get_lbl_path(args.lbl_dir, mech)
         mech_cv = []
@@ -92,63 +92,71 @@ if __name__ == '__main__':
         mech_df.to_csv(mech_cv_file, index=False)
         print(f"Saved combined CV for mechanism {mech} to {mech_cv_file}")
 
-        mean_f1_col = f'mean_test_{REFIT_METRIC}'
-        mean_acc_col = 'mean_test_accuracy'
-        mean_prec_col = 'mean_test_precision'
-        mean_rec_col = 'mean_test_recall'
-        best_idx = mech_df[mean_f1_col].idxmax()
-        best_row = mech_df.loc[best_idx]
-        print(f"Best for mechanism {mech}:", best_row[['mechanism','model','resample','fingerprint',mean_f1_col]].to_dict())
+        # Retrain/evaluate selected models
+        if args.best_config:
+            best_cfg = pd.read_csv(args.best_config)
+            summary = []
+            for _, row in best_cfg.iterrows():
+                mech = int(row['mechanism'])
+                model_name = row['model']
+                resample_method = row['resample']
+                fp_name = row['fingerprint']
 
-        summary.append({
-            'mechanism': mech,
-            'model': best_row['model'],
-            'resample': best_row['resample'],
-            'fingerprint': best_row['fingerprint'],           
-            'accuracy': best_row[mean_acc_col],
-            'precision': best_row[mean_prec_col],
-            'recall': best_row[mean_rec_col],
-            'f1_score': best_row[mean_f1_col]
-        })
+                print(f"\nRetraining best model for mechanism {mech} - {model_name}_{resample_method}_{fp_name}")
 
-        # Retrain best model on full train set
-        fp_path_best = next(p for p in fp_paths if os.path.splitext(os.path.basename(p))[0]==best_row['fingerprint']) # Get path of fingerprint file
-        X_best, y_best, _ = load_data(mech, fp_path_best, lbl_path)
-        X_tr, X_te, y_tr, y_te = train_test_split(
-            X_best, y_best, test_size=0.3,
-            stratify=y_best, random_state=RANDOM_STATE
-        )
-        X_res_best, y_res_best = resample_data(X_tr, y_tr, best_row['resample'])
-        final_model, _, _ = train_model(X_res_best, y_res_best, best_row['model'])
+                # Retrain best model on full train set
+                lbl_path = get_lbl_path(args.lbl_dir, mech)
+                fp_path = next(p for p in fp_paths if os.path.splitext(os.path.basename(p))[0]==fp_name)
 
-        # Evaluate best model on test set
-        final_metrics = evaluate_model(final_model, X_te, y_te)
-        print(f"Test ROC AUC for the best model of mechanism {mech} - model {best_row['model']}_{best_row['resample']}_{best_row['fingerprint']}: {final_metrics['roc_auc']:.4f}")
-        print(final_metrics['report'])
+                X, y, _ = load_data(mech, fp_path, lbl_path)
+                X_train, X_test, y_train, y_test = train_test_split(
+                    X, y, test_size=0.3,
+                    stratify=y, random_state=RANDOM_STATE
+                )
+                X_res, y_res = resample_data(X_train, y_train, resample_method)
+                final_model, _, _ = train_model(X_res, y_res, model_name)
 
-        # Plot and save confusion matrix
-        cm_file = os.path.join(
-            out_dir,
-            f'confusion_coche{mech}_{best_row["model"]}_{best_row["resample"]}_{best_row["fingerprint"]}.png'
-        )
-        plot_confusion_matrix(
-            final_metrics['confusion_matrix'],
-            labels=['Non-toxic', 'Toxic'],
-            filename=cm_file
-        )
-        print(f"Saved confusion matrix to {cm_file}")
+                # Evaluate best model on test set
+                final_metrics = evaluate_model(final_model, X_test, y_test)
+                print(f"Test ROC AUC for mechanism {mech}: {final_metrics['roc_auc']:.4f}")
+                print(final_metrics['report'])
 
-        # Save the best model
-        best_model = f"best_coche{mech}_{best_row['model']}_{best_row['resample']}_{best_row['fingerprint']}.joblib"
-        save_model(final_model, os.path.join(out_dir, best_model))
-        print(f"Saved best model for mechanism {mech} to {best_model}")
+                # Plot and save confusion matrix
+                cm_file = os.path.join(
+                    out_dir,
+                    f'confusion_coche{mech}_{model_name}_{resample_method}_{fp_name}.png'
+                )
+                plot_confusion_matrix(
+                    final_metrics['confusion_matrix'],
+                    labels=['Non-toxic', 'Toxic'],
+                    filename=cm_file
+                )
+                print(f"Saved confusion matrix to {cm_file}")
 
-    summary_df  = pd.DataFrame(summary)
-    summary_file= os.path.join(out_dir, 'best_per_mechanism.csv')
-    # If the summary CSV exists, append without header; otherwise write new
-    if os.path.exists(summary_file):
-        summary_df.to_csv(summary_file, index=False, mode='a', header=False)
-    else:
-        summary_df.to_csv(summary_file, index=False)
-    print(f"Saved summary of best models to {summary_file}")
-    print("\nDone.")
+                # Save the best model
+                best_model = f"best_coche{mech}_{model_name}_{resample_method}_{fp_name}.joblib"
+                save_model(final_model, os.path.join(out_dir, best_model))
+                print(f"Saved best model for mechanism {mech} to {best_model}")
+
+                report = final_metrics['report']
+                summary.append({
+                    'mechanism': mech,
+                    'model': model_name,
+                    'resample': resample_method,
+                    'fingerprint': fp_name,
+                    'accuracy': report['accuracy'],
+                    'precision': report['weighted avg']['precision'],
+                    'recall': report['weighted avg']['recall'],
+                    'f1_score': report['weighted avg']['f1-score'],
+                    'roc_auc': final_metrics['roc_auc']
+                })
+
+            summary_df = pd.DataFrame(summary)
+            summary_file = os.path.join(out_dir, 'best_per_mechanism.csv')
+            # If the summary CSV exists, append without header; otherwise write new
+            if os.path.exists(summary_file):
+                summary_df.to_csv(summary_file, index=False, mode='a', header=False)
+            else:
+                summary_df.to_csv(summary_file, index=False)
+        print(f"Saved summary of best models to {summary_file}")
+        print("\nDone.")
