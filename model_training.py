@@ -32,7 +32,6 @@ def train_model(X, y, model_name: str, refit_metric=None):
     """
     Hyperparameter tuning with GridSearchCV using multiple scoring metrics.
     Optionally refits on the provided metric to obtain a trained model.
-    Returns best_estimator_ (or None), best_score_ (or None), cv_results_
     """
 
     # Inform the user which device will be used for training
@@ -83,7 +82,7 @@ def train_model(X, y, model_name: str, refit_metric=None):
         best_estimator = grid.best_estimator_
         best_score = grid.best_score_
     else:
-        best_estimator = None
+        best_estimator = estimator.fit(X, y)
         best_score = None
 
     return best_estimator, best_score, grid.cv_results_
