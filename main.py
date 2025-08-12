@@ -75,8 +75,11 @@ if __name__ == '__main__':
             for method in ['smote', 'rus']:
                 X_res, y_res = resample_data(X_train, y_train, method)
                 for model_name in MODELS:
-                    print(f"Training {model_name.upper()} | FP={fp_name} | Method={method.upper()} | refit=False")
-                    _, _, cv_results = train_model(X_res, y_res, model_name, refit_metric=None)
+                    print(f"Training {model_name.upper()} | FP={fp_name} | Method={method.upper()}")
+                    best_model, _, cv_results = train_model(
+                        X_res, y_res, model_name, refit_metric=None
+                    )
+                    metrics = evaluate_model(best_model, X_test, y_test)
 
                     # Save individual CV results
                     df_cv = pd.DataFrame(cv_results)
@@ -84,6 +87,7 @@ if __name__ == '__main__':
                     df_cv['model']       = model_name
                     df_cv['resample']    = method
                     df_cv['fingerprint'] = fp_name
+                    df_cv['confusion_matrix'] = [metrics['confusion_matrix'].tolist()] * len(df_cv)
                     mech_cv.append(df_cv)
         
         mech_df = pd.concat(mech_cv, ignore_index=True)
@@ -113,7 +117,7 @@ if __name__ == '__main__':
                     stratify=y, random_state=RANDOM_STATE
                 )
                 X_res, y_res = resample_data(X_train, y_train, resample_method)
-                final_model, _, _ = train_model(X_res, y_res, model_name)
+                final_model, _, _ = train_model(X_res, y_res, model_name, refit_metric=None)
 
                 # Evaluate best model on test set
                 final_metrics = evaluate_model(final_model, X_test, y_test)
@@ -128,7 +132,10 @@ if __name__ == '__main__':
                 plot_confusion_matrix(
                     final_metrics['confusion_matrix'],
                     labels=['Non-toxic', 'Toxic'],
-                    filename=cm_file
+                    filename=cm_file,
+                    title=f'Ma trận nhầm lẫn - cơ chế {mech}',
+                    xlabel='Dự đoán',
+                    ylabel='Thực tế'
                 )
                 print(f"Saved confusion matrix to {cm_file}")
 
