@@ -85,7 +85,7 @@ if __name__ == '__main__':
                     
                     # Run GRID SEARCH without refitting to allow manual selection later (trên TRAIN gốc; sampler nằm trong pipeline → tránh leakage)
                     _, _, cv_results = train_model(
-                        X_res, y_res,
+                        X_train, y_train,
                         model_name,
                         refit_metric=None,
                         params=None,
