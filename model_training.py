@@ -1,3 +1,8 @@
+import numpy as np
+import pandas as pd
+import cupy as cp
+import cudf
+
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import make_scorer
 from sklearn.metrics import (accuracy_score, precision_score, recall_score, f1_score)
@@ -36,6 +41,29 @@ PARAM_GRIDS = {
 }
 
 
+def _to_gpu_array(X, y):
+    """
+    Cast numpy/pandas -> cupy/cudf if DEVICE = 'cuda'
+    """
+    # Cast X
+    if isinstance(X, np.ndarray):
+        X_gpu = cp.asarray(X)
+    elif isinstance(X, pd.DataFrame):
+        X_gpu = cudf.DataFrame.from_pandas(X)
+    else:
+        X_gpu = X  # giả sử đã là cupy/cudf
+    
+    # Cast y
+    if isinstance(y, np.ndarray):
+        y_gpu = cp.asarray(y)
+    elif isinstance(y, pd.Series):
+        y_gpu = cudf.Series(y)
+    else:
+        y_gpu = y
+    
+    return X_gpu, y_gpu
+
+
 def _build_estimator(model_name: str):
     if model_name == 'svm':
         return SVC(random_state=RANDOM_STATE, probability=True)
@@ -44,19 +72,29 @@ def _build_estimator(model_name: str):
         return RandomForestClassifier(random_state=RANDOM_STATE)
     
     elif model_name == 'xgb':
-        common = dict(eval_metric='logloss', random_state=RANDOM_STATE)
         if DEVICE == 'cuda':
-            estimator = XGBClassifier(
-                eval_metric='logloss',
-                random_state=RANDOM_STATE,
-                tree_method='hist'
-            )
-        else:
-            estimator = XGBClassifier(
-                eval_metric='logloss',
-                random_state=RANDOM_STATE
-            )
-        return estimator
+            try:
+                return XGBClassifier(
+                    eval_metric='logloss',
+                    random_state=RANDOM_STATE,
+                    tree_method='hist',
+                    device='cuda',
+                    predictor='gpu_predictor'U
+                )
+            except TypeError:
+                # Fallback cho phiên bản xgboost cũ (không có tham số 'device')
+                return XGBClassifier(
+                    eval_metric='logloss',
+                    random_state=RANDOM_STATE,
+                    tree_method='gpu_hist',
+                    predictor='gpu_predictor'
+                )
+        # CPU fallback
+        return XGBClassifier(
+            eval_metric='logloss',
+            random_state=RANDOM_STATE,
+            tree_method='hist'
+        )
 
     else:
         raise ValueError(f"Unknown model: {model_name}")
@@ -91,6 +129,10 @@ def train_model(X, y, model_name: str, refit_metric=None, params=None, sampler=N
 
     # Inform the user which device will be used for training
     print(f"Using device: {DEVICE}")
+
+    # Nếu dùng GPU thì cast sang cupy/cudf
+    if DEVICE == 'cuda' and model_name == 'xgb':
+        X, y = _to_gpu_array(X, y)
 
     pipe = build_pipeline(model_name, sampler)
 
