@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import cupy as cp
-import cudf
 
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import make_scorer
@@ -42,26 +41,12 @@ PARAM_GRIDS = {
 
 
 def _to_gpu_array(X, y):
-    """
-    Cast numpy/pandas -> cupy/cudf if DEVICE = 'cuda'
-    """
-    # Cast X
+    # Convert numpy arrays to cupy arrays for GPU training
     if isinstance(X, np.ndarray):
-        X_gpu = cp.asarray(X)
-    elif isinstance(X, pd.DataFrame):
-        X_gpu = cudf.DataFrame.from_pandas(X)
-    else:
-        X_gpu = X  # giả sử đã là cupy/cudf
-    
-    # Cast y
+        X = cp.asarray(X)
     if isinstance(y, np.ndarray):
-        y_gpu = cp.asarray(y)
-    elif isinstance(y, pd.Series):
-        y_gpu = cudf.Series(y)
-    else:
-        y_gpu = y
-    
-    return X_gpu, y_gpu
+        y = cp.asarray(y)
+    return X, y
 
 
 def _build_estimator(model_name: str):
