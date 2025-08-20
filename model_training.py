@@ -79,7 +79,7 @@ def _build_estimator(model_name: str):
                     random_state=RANDOM_STATE,
                     tree_method='hist',
                     device='cuda',
-                    predictor='gpu_predictor'U
+                    predictor='gpu_predictor'
                 )
             except TypeError:
                 # Fallback cho phiên bản xgboost cũ (không có tham số 'device')
