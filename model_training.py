@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import cupy as cp
 
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import make_scorer
@@ -40,15 +39,6 @@ PARAM_GRIDS = {
 }
 
 
-def _to_gpu_array(X, y):
-    # Convert numpy arrays to cupy arrays for GPU training
-    if isinstance(X, np.ndarray):
-        X = cp.asarray(X)
-    if isinstance(y, np.ndarray):
-        y = cp.asarray(y)
-    return X, y
-
-
 def _build_estimator(model_name: str):
     if model_name == 'svm':
         return SVC(random_state=RANDOM_STATE, probability=True)
@@ -63,16 +53,14 @@ def _build_estimator(model_name: str):
                     eval_metric='logloss',
                     random_state=RANDOM_STATE,
                     tree_method='hist',
-                    device='cuda',
-                    predictor='gpu_predictor'
+                    device='cuda'
                 )
             except TypeError:
                 # Fallback cho phiên bản xgboost cũ (không có tham số 'device')
                 return XGBClassifier(
                     eval_metric='logloss',
                     random_state=RANDOM_STATE,
-                    tree_method='gpu_hist',
-                    predictor='gpu_predictor'
+                    tree_method='gpu_hist'
                 )
         # CPU fallback
         return XGBClassifier(
@@ -114,10 +102,6 @@ def train_model(X, y, model_name: str, refit_metric=None, params=None, sampler=N
 
     # Inform the user which device will be used for training
     print(f"Using device: {DEVICE}")
-
-    # Nếu dùng GPU thì cast sang cupy/cudf
-    if DEVICE == 'cuda' and model_name == 'xgb':
-        X, y = _to_gpu_array(X, y)
 
     pipe = build_pipeline(model_name, sampler)
 
