@@ -46,22 +46,17 @@ def _build_estimator(model_name: str):
     elif model_name == 'xgb':
         common = dict(eval_metric='logloss', random_state=RANDOM_STATE)
         if DEVICE == 'cuda':
-            try:
-                return XGBClassifier(
-                    tree_method='hist',
-                    device='cuda',            
-                    predictor='gpu_predictor',
-                    **common
-                )
-            except TypeError:
-                # Fallback cho phiên bản XGBoost cũ (không có 'device')
-                return XGBClassifier(
-                    tree_method='gpu_hist',
-                    predictor='gpu_predictor',
-                    **common
-                )
-        # CPU fallback
-        return XGBClassifier(tree_method='hist', predictor='auto', **common)
+            estimator = XGBClassifier(
+                eval_metric='logloss',
+                random_state=RANDOM_STATE,
+                tree_method='hist'
+            )
+        else:
+            estimator = XGBClassifier(
+                eval_metric='logloss',
+                random_state=RANDOM_STATE
+            )
+        return estimator
 
     else:
         raise ValueError(f"Unknown model: {model_name}")
