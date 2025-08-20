@@ -40,6 +40,8 @@ if __name__ == '__main__':
                         help='CSV file specifying selected model/resample/fingerprint for each mechanism')
     parser.add_argument('--oof_cm', action='store_true',
                         help='If set, compute and attach OOF confusion matrix per parameter set into *_all_cv.csv')
+    parser.add_argument('--skip_cv', action='store_true',
+                    help='If set, skip cross-validation and only retrain using best_config')
     args = parser.parse_args()
 
     # Display which device will be used for training
@@ -55,78 +57,79 @@ if __name__ == '__main__':
 
     # Run cross-validation
     for mech in mechanisms:
-        lbl_path = get_lbl_path(args.lbl_dir, mech)
-        mech_cv = []
+        if not args.skip_cv:
+            lbl_path = get_lbl_path(args.lbl_dir, mech)
+            mech_cv = []
 
-        for fp_path in fp_paths:
-            fp_name = os.path.splitext(os.path.basename(fp_path))[0]
-            print(f"\n--- Cơ chế {mech} - Fingerprint {fp_name} ---")
+            for fp_path in fp_paths:
+                fp_name = os.path.splitext(os.path.basename(fp_path))[0]
+                print(f"\n--- Cơ chế {mech} - Fingerprint {fp_name} ---")
 
-            # Load data
-            X, y, smiles = load_data(mech, fp_path, lbl_path)
+                # Load data
+                X, y, smiles = load_data(mech, fp_path, lbl_path)
 
-            print(f"Full dataset: total={len(y)} samples => 0: {sum(y==0)}, 1: {sum(y==1)}")
+                print(f"Full dataset: total={len(y)} samples => 0: {sum(y==0)}, 1: {sum(y==1)}")
 
-            # Export fingerprint matrix
-            out_fp_csv = f"fingerprint_matrix_coche{mech}_{fp_name}.csv"
-            X.to_csv(os.path.join(out_dir, out_fp_csv), index=False)
-            print(f"Saved matrix to {out_fp_csv}")
+                # Export fingerprint matrix
+                out_fp_csv = f"fingerprint_matrix_coche{mech}_{fp_name}.csv"
+                X.to_csv(os.path.join(out_dir, out_fp_csv), index=False)
+                print(f"Saved matrix to {out_fp_csv}")
 
-            # Stratified train/test split (train:test = 7:3)
-            X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=0.3,
-                stratify=y, random_state=RANDOM_STATE
-            )
+                # Stratified train/test split (train:test = 7:3)
+                X_train, X_test, y_train, y_test = train_test_split(
+                    X, y, test_size=0.3,
+                    stratify=y, random_state=RANDOM_STATE
+                )
 
-            for method in ['smote', 'rus']:
-                sampler = SMOTE(random_state=RANDOM_STATE) if method == 'smote' else RandomUnderSampler(random_state=RANDOM_STATE)
+                for method in ['smote', 'rus']:
+                    sampler = SMOTE(random_state=RANDOM_STATE) if method == 'smote' else RandomUnderSampler(random_state=RANDOM_STATE)
 
-                for model_name in MODELS:
-                    print(f"Training {model_name.upper()} | FP={fp_name} | Method={method.upper()}")
-                    
-                    # Run GRID SEARCH without refitting to allow manual selection later (trên TRAIN gốc; sampler nằm trong pipeline → tránh leakage)
-                    _, _, cv_results = train_model(
-                        X_train, y_train,
-                        model_name,
-                        refit_metric=None,
-                        params=None,
-                        sampler=sampler
-                    )
+                    for model_name in MODELS:
+                        print(f"Training {model_name.upper()} | FP={fp_name} | Method={method.upper()}")
+                        
+                        # Run GRID SEARCH without refitting to allow manual selection later (trên TRAIN gốc; sampler nằm trong pipeline → tránh leakage)
+                        _, _, cv_results = train_model(
+                            X_train, y_train,
+                            model_name,
+                            refit_metric=None,
+                            params=None,
+                            sampler=sampler
+                        )
 
-                    df_cv = pd.DataFrame(cv_results)
+                        df_cv = pd.DataFrame(cv_results)
 
-                    # (OPTIONAL) Tính & gắn OOF-CM nếu flag bật
-                    if args.oof_cm:
-                        pipe = build_pipeline(model_name, sampler)
-                        df_cv['oof_confusion_matrix_cv'] = None
-                        df_cv['oof_accuracy_cv'] = None
-                        df_cv['oof_precision_cv'] = None
-                        df_cv['oof_recall_cv'] = None
-                        df_cv['oof_f1_cv'] = None
-                        df_cv['oof_roc_auc_cv'] = None
+                        # (OPTIONAL) Tính & gắn OOF-CM nếu flag bật
+                        if args.oof_cm:
+                            pipe = build_pipeline(model_name, sampler)
+                            df_cv['oof_confusion_matrix_cv'] = None
+                            df_cv['oof_accuracy_cv'] = None
+                            df_cv['oof_precision_cv'] = None
+                            df_cv['oof_recall_cv'] = None
+                            df_cv['oof_f1_cv'] = None
+                            df_cv['oof_roc_auc_cv'] = None
 
-                        print(f"Computing OOF-CM for {len(df_cv)} parameter sets...")
-                        for i, p in enumerate(df_cv['params']):
-                            oof = oof_eval_for_params(pipe, X_train, y_train, p, CV_SPLITTER)
-                            cm_json = json.dumps({'labels': [0, 1], 'matrix': oof['cm'].tolist()})
-                            df_cv.at[i, 'oof_confusion_matrix_cv'] = cm_json
-                            df_cv.at[i, 'oof_accuracy_cv']        = oof['accuracy']
-                            df_cv.at[i, 'oof_precision_cv']       = oof['precision']
-                            df_cv.at[i, 'oof_recall_cv']          = oof['recall']
-                            df_cv.at[i, 'oof_f1_cv']              = oof['f1']
-                            df_cv.at[i, 'oof_roc_auc_cv']         = oof['roc_auc']
-                    
-                    # Metadata
-                    df_cv['mechanism']   = mech
-                    df_cv['model']       = model_name
-                    df_cv['resample']    = method
-                    df_cv['fingerprint'] = fp_name
-                    mech_cv.append(df_cv)
-        
-        mech_df = pd.concat(mech_cv, ignore_index=True)
-        mech_cv_file = os.path.join(out_dir, f'coche{mech}_all_cv.csv')
-        mech_df.to_csv(mech_cv_file, index=False)
-        print(f"Saved combined CV for mechanism {mech} to {mech_cv_file}")
+                            print(f"Computing OOF-CM for {len(df_cv)} parameter sets...")
+                            for i, p in enumerate(df_cv['params']):
+                                oof = oof_eval_for_params(pipe, X_train, y_train, p, CV_SPLITTER)
+                                cm_json = json.dumps({'labels': [0, 1], 'matrix': oof['cm'].tolist()})
+                                df_cv.at[i, 'oof_confusion_matrix_cv'] = cm_json
+                                df_cv.at[i, 'oof_accuracy_cv']        = oof['accuracy']
+                                df_cv.at[i, 'oof_precision_cv']       = oof['precision']
+                                df_cv.at[i, 'oof_recall_cv']          = oof['recall']
+                                df_cv.at[i, 'oof_f1_cv']              = oof['f1']
+                                df_cv.at[i, 'oof_roc_auc_cv']         = oof['roc_auc']
+                        
+                        # Metadata
+                        df_cv['mechanism']   = mech
+                        df_cv['model']       = model_name
+                        df_cv['resample']    = method
+                        df_cv['fingerprint'] = fp_name
+                        mech_cv.append(df_cv)
+            
+            mech_df = pd.concat(mech_cv, ignore_index=True)
+            mech_cv_file = os.path.join(out_dir, f'coche{mech}_all_cv.csv')
+            mech_df.to_csv(mech_cv_file, index=False)
+            print(f"Saved combined CV for mechanism {mech} to {mech_cv_file}")
 
         # Retrain/evaluate selected models
         if args.best_config:
