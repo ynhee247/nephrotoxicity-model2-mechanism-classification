@@ -1,5 +1,4 @@
 # Data files, results, logs
-results/
 test-predict/
 test_predict.csv
 test_predict.smi
