@@ -173,16 +173,12 @@ if __name__ == '__main__':
 
                 params = {}
                 for k, v in row.items():
-                    if k in ('mechanism', 'model', 'resample', 'fingerprint'):
+                    if k in ('mechanism', 'model', 'resample', 'fingerprint') or pd.isna(v):
                         continue
-                    if pd.isna(v):
-                        continue
-                    key = k if str(k).startswith('clf__') else f'clf__{k}'
-                    if key in valid_keys:
-                        params[key] = v
+                    params[k] = v
 
                 # Cast some integer params
-                for ik in ('clf__max_depth', 'clf__n_estimators', 'clf__min_child_weight'):
+                for ik in ('clf__max_depth', 'clf__n_estimators', 'clf__min_child_weight', 'clf__min_samples_split', 'clf__min_samples_leaf'):
                     if ik in params:
                         try:
                             params[ik] = int(params[ik])
