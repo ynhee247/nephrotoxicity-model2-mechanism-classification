@@ -5,7 +5,6 @@ import json
 
 from config import MODELS, RANDOM_STATE, FP_DIR, LBL_DIR, DEVICE, CV_SPLITTER
 from data_loader import load_data
-from preprocess import resample_data
 from model_training import train_model, PARAM_GRIDS, build_pipeline
 from evaluation import evaluate_model, plot_confusion_matrix, oof_eval_for_params
 from utils import save_model
@@ -25,6 +24,15 @@ def get_lbl_path(lbl_arg: str, mech: int):
     if lbl_arg and os.path.isfile(lbl_arg):
         return os.path.abspath(lbl_arg)
     return os.path.join(LBL_DIR, f'coche{mech}.csv')
+
+def resolve_fp_path(fp_paths, fp_name_sel: str):
+    cands = [p for p in fp_paths if os.path.splitext(os.path.basename(p))[0] == fp_name_sel]
+    if not cands:
+        avail = ", ".join(os.path.splitext(os.path.basename(p))[0] for p in fp_paths)
+        raise FileNotFoundError(
+            f"Fingerprint '{fp_name_sel}' not found under --fp_dir. Available: {avail}"
+        )
+    return cands[0]
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run renal toxicity classification')
@@ -53,7 +61,13 @@ if __name__ == '__main__':
 
     # Prepare fingerprint file list and mechanisms
     fp_paths = get_fp_paths(args.fp_dir)
-    mechanisms = [args.mechanism] if args.mechanism else list(range(1, 8))
+    
+    # Decide mechanisms to run
+    if args.skip_cv and args.best_config and not args.mechanism:
+        cfg = pd.read_csv(args.best_config)
+        mechanisms = sorted(int(m) for m in cfg['mechanism'].unique())
+    else:
+        mechanisms = [args.mechanism] if args.mechanism else list(range(1, 8))
 
     # Run cross-validation
     for mech in mechanisms:
@@ -134,26 +148,51 @@ if __name__ == '__main__':
         # Retrain/evaluate selected models
         if args.best_config:
             best_cfg = pd.read_csv(args.best_config)
+
+            # Chỉ lấy dòng thuộc cơ chế hiện tại
+            rows = best_cfg[best_cfg['mechanism'] == mech]
+            if rows.empty:
+                print(f"No rows in best_config for mechanism {mech}; skipping retrain for this mechanism.")
+                print("\nDone.")
+                continue
+
             summary = []
-            for _, row in best_cfg.iterrows():
+            for _, row in rows.iterrows():
                 mech_sel = int(row['mechanism'])
                 model_name = row['model']
                 resample_method = row['resample']
                 fp_name_sel = row['fingerprint']
 
-                print(f"\nRetraining best model for mechanism {mech} - {model_name}_{resample_method}_{fp_name_sel}")
+                print(f"\nRetraining best model for mechanism {mech_sel} - {model_name}_{resample_method}_{fp_name_sel}")
 
-                # Map params từ file best_config sang clf__*
+                # Build valid params from best_config row
+                if model_name == 'svm':
+                    valid_keys = set(PARAM_GRIDS['svm_linear'].keys()) | set(PARAM_GRIDS['svm_rbf'].keys())
+                else:
+                    valid_keys = set(PARAM_GRIDS[model_name].keys())
+
                 params = {}
-                for k in row.index:
-                    if k in ['mechanism', 'model', 'resample', 'fingerprint'] or pd.isna(row[k]):
+                for k, v in row.items():
+                    if k in ('mechanism', 'model', 'resample', 'fingerprint'):
                         continue
-                    params[k if str(k).startswith('clf__') else f'clf__{k}'] = row[k]
+                    if pd.isna(v):
+                        continue
+                    key = k if str(k).startswith('clf__') else f'clf__{k}'
+                    if key in valid_keys:
+                        params[key] = v
+
+                # Cast some integer params
+                for ik in ('clf__max_depth', 'clf__n_estimators', 'clf__min_child_weight'):
+                    if ik in params:
+                        try:
+                            params[ik] = int(params[ik])
+                        except Exception:
+                            pass
 
                 # Retrain best model on full train set
-                lbl_path = get_lbl_path(args.lbl_dir, mech)
-                fp_path = next(p for p in fp_paths if os.path.splitext(os.path.basename(p))[0] == fp_name_sel)
-                X_all, y_all, _ = load_data(mech, fp_path, lbl_path)
+                lbl_path = get_lbl_path(args.lbl_dir, mech_sel)
+                fp_path = resolve_fp_path(fp_paths, fp_name_sel)
+                X_all, y_all, _ = load_data(mech_sel, fp_path, lbl_path)
                 X_train, X_test, y_train, y_test = train_test_split(
                     X_all, y_all, test_size=0.3, stratify=y_all, random_state=RANDOM_STATE
                 )
@@ -167,32 +206,32 @@ if __name__ == '__main__':
 
                 # Evaluate best model on test set
                 final_metrics = evaluate_model(final_model, X_test, y_test)
-                print(f"Test ROC AUC for mechanism {mech}: {final_metrics['roc_auc']:.4f}")
+                print(f"Test ROC AUC for mechanism {mech_sel}: {final_metrics['roc_auc']:.4f}")
                 print(final_metrics['report'])
 
                 # Plot and save confusion matrix
                 cm_file = os.path.join(
                     out_dir,
-                    f'confusion_coche{mech}_{model_name}_{resample_method}_{fp_name_sel}.png'
+                    f'confusion_coche{mech_sel}_{model_name}_{resample_method}_{fp_name_sel}.png'
                 )
                 plot_confusion_matrix(
                     final_metrics['confusion_matrix'],
                     labels=['Non-toxic', 'Toxic'],
                     filename=cm_file,
-                    title=f'Ma trận nhầm lẫn - cơ chế {mech}',
+                    title=f'Ma trận nhầm lẫn - cơ chế {mech_sel}',
                     xlabel='Dự đoán',
                     ylabel='Thực tế'
                 )
                 print(f"Saved confusion matrix to {cm_file}")
 
                 # Save the best model
-                best_model = f"best_coche{mech}_{model_name}_{resample_method}_{fp_name_sel}.joblib"
+                best_model = f"best_coche{mech_sel}_{model_name}_{resample_method}_{fp_name_sel}.joblib"
                 save_model(final_model, os.path.join(out_dir, best_model))
-                print(f"Saved best model for mechanism {mech} to {best_model}")
+                print(f"Saved best model for mechanism {mech_sel} to {best_model}")
 
                 report = final_metrics['report']
                 summary.append({
-                    'mechanism': mech,
+                    'mechanism': mech_sel,
                     'model': model_name,
                     'resample': resample_method,
                     'fingerprint': fp_name_sel,
