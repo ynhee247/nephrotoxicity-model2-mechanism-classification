@@ -41,7 +41,7 @@ if __name__ == '__main__':
     parser.add_argument('--oof_cm', action='store_true',
                         help='If set, compute and attach OOF confusion matrix per parameter set into *_all_cv.csv')
     parser.add_argument('--skip_cv', action='store_true',
-                    help='If set, skip cross-validation and only retrain using best_config')
+                        help='If set, skip cross-validation and only retrain using best_config')
     args = parser.parse_args()
 
     # Display which device will be used for training
