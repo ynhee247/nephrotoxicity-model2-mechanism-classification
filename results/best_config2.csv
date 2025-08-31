@@ -1,0 +1,8 @@
+mechanism,model,resample,fingerprint,clf__C,clf__kernel,clf__gamma,clf__max_depth,clf__min_samples_leaf,clf__min_samples_split,clf__n_estimators,clf__learning_rate,clf__min_child_weight
+1,rf,smote,substructure,,,,20,2,2,50,,
+2,xgb,smote,substructure,,,0.1,5,,,200,0.2,10
+3,rf,smote,rdk7,,,,5,1,5,50,,
+4,svm,smote,pubchem,100,rbf,0.01,,,,,,
+5,rf,rus,maccs,,,,15,2,2,200,,
+6,svm,smote,substructure,1000,rbf,0.001,,,,,,
+7,rf,smote,ecfp2,,,,15,1,10,100,,
