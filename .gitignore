@@ -2,3 +2,4 @@
 test-predict/
 test_predict.csv
 test_predict.smi
+results/retrain-and-evaluate/log.txt
