@@ -1,9 +1,0 @@
-Name,smiles,prediction,probability
-Panaxynol,CCCCCCC/C=C\CC#CC#C[C@H](O)C=C,0,0.0020534912712872576
-Ocotillol genin,O[C@H]1CC[C@@]2(C)C(C([H])C[C@]3(C)C2C[C@@H](O)C4[C@@]3(C)CC[C@@H]4[C@H]5CC[C@@H](C(C)(O)C)O5)C1(C)C,0,6.767752840385139e-05
-20(S)-G-Rh2,CC1(C)[C@@H](O[C@@]([H])([C@](O)2[H])O[C@]([H])(CO)[C@@]([H])(O)[C@@]2(O)[H])CC[C@@]3(C)C1C([H])C[C@]4(C)C3C[C@@H](O)C5[C@@]4(C)CCC5[C@@](CC/C=C(C)/C)(C)O,0,0.00010578184695215692
-20(R)-G-Rh2,CC1(C)[C@@H](O[C@@]([H])([C@](O)2[H])O[C@]([H])(CO)[C@@]([H])(O)[C@@]2(O)[H])CC[C@@]3(C)C1C([H])C[C@]4(C)C3C[C@@H](O)C5[C@@]4(C)CCC5[C@@](CC/C=C(C)/C)(O)C,0,0.00010578184695215692
-20(R)-G-Rg3,[H][C@]([C@@]([H])(CO)O[C@@]([H])(O[C@@]1([H])[C@@](O[C@H]2CC[C@@]3(C)C(C([H])C[C@]4(C)C3C[C@@H](O)C5[C@@]4(C)CCC5[C@](C)(O)CC/C=C(C)/C)C2(C)C)([H])O[C@]([H])(CO)[C@@]([H])(O)[C@](O)1[H])[C@](O)6[H])(O)[C@@]6(O)[H],0,0.00010590640011235003
-20(S)-G-Rg3,[H][C@]([C@@]([H])(CO)O[C@@]([H])(O[C@@]1([H])[C@@](O[C@H]2CC[C@@]3(C)C(C([H])C[C@]4(C)C3C[C@@H](O)C5[C@@]4(C)CCC5[C@](O)(C)CC/C=C(C)/C)C2(C)C)([H])O[C@]([H])(CO)[C@@]([H])(O)[C@](O)1[H])[C@](O)6[H])(O)[C@@]6(O)[H],0,0.00010590640011235003
-G-Rk1,[H][C@]([C@@]([H])(CO)O[C@@]([H])(O[C@@]1([H])[C@@](O[C@H]2CC[C@@]3(C)C(C([H])C[C@]4(C)C3C[C@@H](O)C5[C@@]4(C)CCC5/C(C)=C\C/C=C(C)/C)C2(C)C)([H])O[C@]([H])(CO)[C@@]([H])(O)[C@](O)1[H])[C@](O)6[H])(O)[C@@]6(O)[H],0,0.00014256411429743341
-G-Rg5,[H][C@]([C@@]([H])(CO)O[C@@]([H])(O[C@@]1([H])[C@@](O[C@H]2CC[C@@]3(C)C(C([H])C[C@]4(C)C3C[C@@H](O)C5[C@@]4(C)CCC5C(CC/C=C(C)/C)=C)C2(C)C)([H])O[C@]([H])(CO)[C@@]([H])(O)[C@](O)1[H])[C@](O)6[H])(O)[C@@]6(O)[H],0,0.00014256411429743341
