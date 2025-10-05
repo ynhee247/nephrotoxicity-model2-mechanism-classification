@@ -1,2 +1,3 @@
 # Data files, results, logs
 results/retrain-and-evaluate/log.txt
+./predict
